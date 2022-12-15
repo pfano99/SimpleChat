@@ -1,11 +1,13 @@
-import socket
-import datetime
-
 import concurrent.futures
+import json
+import socket
 import threading
 
-PORT = 5000
-HOST = "127.0.0.1"
+with open("config.json") as config_file:
+    data = json.load(config_file)
+
+HOST = data["SERVER_IP"]
+PORT = data["SERVER_PORT"]
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.bind((HOST, PORT))
@@ -42,10 +44,6 @@ def listen_for_connection():
         conn_thread = threading.Thread(target=handle_connetion, args=(conn, addr))
         conn_thread.start()
         # conn_thread.join()
-
-
-def receive_new_amessages(connection):
-    pass
 
 
 def main():

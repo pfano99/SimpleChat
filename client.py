@@ -1,8 +1,12 @@
 import socket
 import concurrent.futures
+import json
 
-HOST = "127.0.0.1"  # The server's hostname or IP address
-PORT = 5000  # The port used by the server
+with open("config.json") as config_file:
+    data = json.load(config_file)
+
+HOST = data["SERVER_IP"]
+PORT = data["SERVER_PORT"]
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((HOST, PORT))
