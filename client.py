@@ -11,18 +11,28 @@ PORT = data["SERVER_PORT"]
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((HOST, PORT))
 
-print("[Connected to server]")
-
 
 def receive_message():
     while True:
-        recv_msg = client_socket.recv(1028).decode("utf-8")
+        buffer_size = client_socket.recv(data["BUFFER_SIZE"]).decode("utf-8")
+        recv_msg = client_socket.recv(int(buffer_size.strip())).decode("utf-8")
         print("Received message: ", recv_msg)
 
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-    _received = executor.submit(receive_message)
+def main():
+    # username = str(input("Enter username: "))
 
-    while True:
-        msg = str(input(">> ")).encode("utf-8")
-        client_socket.send(msg)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        _received = executor.submit(receive_message)
+
+        while True:
+            msg = str(input(">> ")).strip()
+            buffer_size = "{:<8}".format(len(msg))
+            if int(buffer_size) > 1:
+                client_socket.send(buffer_size.encode("utf-8"))
+                client_socket.send(msg.encode("utf-8"))
+
+
+if __name__ == "__main__":
+    print("[Connected to server]")
+    main()

@@ -23,14 +23,17 @@ def handle_message(_message, _from):
     print("[Server Broadcasting message to {} clients]....".format(len(connected_clients)))
     for client in connected_clients:
         if client is not _from:
+            buffer_size = "{:<8}".format(len(_message.decode("utf-8")))
+            client.send(buffer_size.encode("utf-8"))
             client.send(_message)
     threadLock.release()
 
 
-def handle_connetion(conn, addr):
-    print("[Server accepted new connection]....")
+def handle_connection(conn, addr):
+    print("[Server accepted new connection from {}]....".format(addr))
     while True:
-        message = conn.recv(1028)
+        buffer_size = int(conn.recv(data["BUFFER_SIZE"]).decode("utf-8"))
+        message = conn.recv(buffer_size)
         handle_message(message, conn)
 
 
@@ -41,9 +44,8 @@ def listen_for_connection():
         connected_clients.append(conn)
         print("[New connection established]....")
 
-        conn_thread = threading.Thread(target=handle_connetion, args=(conn, addr))
+        conn_thread = threading.Thread(target=handle_connection, args=(conn, addr))
         conn_thread.start()
-        # conn_thread.join()
 
 
 def main():
