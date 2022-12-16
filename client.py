@@ -16,11 +16,19 @@ def receive_message():
     while True:
         buffer_size = client_socket.recv(data["BUFFER_SIZE"]).decode("utf-8")
         recv_msg = client_socket.recv(int(buffer_size.strip())).decode("utf-8")
-        print("Received message: ", recv_msg)
+        msg = "{}: {}".format(recv_msg[:recv_msg.index("__")], recv_msg[recv_msg.index("__") + 2:])
+        print(msg)
+
+
+def send_username(username: str):
+    client_socket.send(username.encode("utf-8"))
 
 
 def main():
-    # username = str(input("Enter username: "))
+    print("[Connected to server]")
+
+    username = str(input("Enter username: "))
+    send_username(username=username)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         _received = executor.submit(receive_message)
@@ -34,5 +42,4 @@ def main():
 
 
 if __name__ == "__main__":
-    print("[Connected to server]")
     main()

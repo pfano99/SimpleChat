@@ -19,19 +19,33 @@ threadLock = threading.Lock()
 
 
 def handle_message(_message, _from):
+    _to = str(_message.decode("utf-8"))[:str(_message.decode("utf-8")).index("__")]
     threadLock.acquire()
-    print("[Server Broadcasting message to {} clients]....".format(len(connected_clients)))
     for client in connected_clients:
-        if client is not _from:
+        if _from is client["connection"]:
+            _message = str(_message.decode("utf-8")).replace(_to, client["username"]).encode("utf-8")
+
+    for client in connected_clients:
+        if str(client["username"]).strip().lower() == _to.lower():
             buffer_size = "{:<8}".format(len(_message.decode("utf-8")))
-            client.send(buffer_size.encode("utf-8"))
-            client.send(_message)
+            client["connection"].send(buffer_size.encode("utf-8"))
+            client["connection"].send(_message)
     threadLock.release()
 
 
 def handle_connection(conn, addr):
     print("[Server accepted new connection from {}]....".format(addr))
+    is_username_set = False
     while True:
+        if not is_username_set:
+            username = conn.recv(data["USERNAME_BUFFER_SIZE"]).decode("utf-8")
+            threadLock.acquire()
+            for client in connected_clients:
+                if client["connection"] is conn:
+                    client["username"] = username
+            threadLock.release()
+            is_username_set = True
+
         buffer_size = int(conn.recv(data["BUFFER_SIZE"]).decode("utf-8"))
         message = conn.recv(buffer_size)
         handle_message(message, conn)
@@ -41,7 +55,13 @@ def listen_for_connection():
     while True:
         print("[Server listening for connections].... ")
         conn, addr = server_socket.accept()
-        connected_clients.append(conn)
+        connected_clients.append(
+            {
+                "connection": conn,
+                "address": addr,
+                "username": None
+            }
+        )
         print("[New connection established]....")
 
         conn_thread = threading.Thread(target=handle_connection, args=(conn, addr))
